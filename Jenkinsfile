@@ -1,31 +1,28 @@
 pipeline {
     agent any
 
-    tools {
-        jdk 'JDK17'
-        maven 'Maven3'
-    }
-
     stages {
+
         stage('Checkout') {
             steps {
-                git 'https://github.com/nchava1468/E-Commerce.git'
+                git 'https://github.com/YOUR_USERNAME/YOUR_REPO.git'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh 'mvn clean package'
             }
         }
-    }
 
-    post {
-        success {
-            echo 'Build successful!'
-        }
-        failure {
-            echo 'Build failed!'
+        stage('Deploy') {
+            steps {
+                sh '''
+                scp -i ~/E-Commerce.pem target/*.jar ec2-user@3.22.114.199:/home/ec2-user/app/app.jar
+                ssh -i ~/E-Commerce.pem ec2-user@3.22.114.199 "pkill -f app.jar || true"
+                ssh -i ~/E-Commerce.pem ec2-user@3.22.114.199 "nohup java -jar /home/ec2-user/app/app.jar > app.log 2>&1 &"
+                '''
+            }
         }
     }
 }
